@@ -41,6 +41,9 @@ func NewRouter (app *app.App) *gin.Engine{
 		"files": []any{},
 	})
  })
+
+
+// auth and admin middleware
  api.GET("/products", middleware.RequiredAdmin(), func(c *gin.Context){
 	userID, ok := middleware.GetUserID(c)
 	if !ok{
@@ -62,6 +65,35 @@ func NewRouter (app *app.App) *gin.Engine{
 		"userID": userID,
 		"role": role,
 		"products": []any{},
+	})
+
+ })
+
+
+ //admin middleware used on a group with authorisation 
+ admin := api.Group("/admin")
+ admin.Use(middleware.RequiredAdmin())
+ admin.GET("/dashboard",  func(c *gin.Context){
+	userID, ok := middleware.GetUserID(c)
+	if !ok{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"error": "Unauthorized",
+		})
+		return
+	}
+
+	role, ok := middleware.GetRole(c)
+	if !ok{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"error": "Only admin can access this route",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"ok": true,
+		"userID": userID,
+		"role": role,
+		"dashboard": []any{},
 	})
  })
 	return router
